@@ -4,3 +4,5 @@ schedule==0.6.0
 Flask-SocketIO==4.2.1
 Flask-APScheduler==1.11.0
 APScheduler==3.6.1
+websocket-client2==1.0
+socketIO-client==0.7.2

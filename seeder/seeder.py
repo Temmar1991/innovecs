@@ -38,15 +38,19 @@ class Ticks(base):
         self.created_at = createad_at
 
 
-@socketio.on('event')
 def insert_to_table():
     now = datetime.datetime.utcnow()
     entry = Ticks(createad_at=now.strftime('%Y-%m-%d %H:%M:%S'))
     session = connect()
     session.add(entry)
     session.commit()
-    socketio.send('Insert done')
     session.close()
+
+
+@socketio.on('Ping')
+def handle_ping():
+    while True:
+        print('Ping !!!')
 
 
 sched = BackgroundScheduler(daemon=True)
