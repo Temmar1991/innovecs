@@ -38,12 +38,14 @@ class Ticks(base):
         self.created_at = createad_at
 
 
+@socketio.on('event')
 def insert_to_table():
     now = datetime.datetime.utcnow()
     entry = Ticks(createad_at=now.strftime('%Y-%m-%d %H:%M:%S'))
     session = connect()
     session.add(entry)
     session.commit()
+    socketio.send('Insert done')
     session.close()
 
 
@@ -63,7 +65,7 @@ sched.start()
 
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, port=9000, debug=True)
 
 
 
