@@ -3,7 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from config import Config
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, join_room, emit
 from flask import Flask
 import time
 import datetime
@@ -18,16 +18,6 @@ app = Flask(__name__)
 socketio = SocketIO(app)
 
 
-def connect():
-    try:
-        session = sessionmaker(bind=db)
-        ses = session()
-        base.metadata.create_all(db)
-        return ses
-    except Exception as e:
-        print(e)
-
-
 class Ticks(base):
     __tablename__ = 'ticks'
 
@@ -38,23 +28,40 @@ class Ticks(base):
         self.created_at = createad_at
 
 
+def connect():
+    try:
+        session = sessionmaker(bind=db)
+        ses = session()
+        base.metadata.create_all(db)
+        return ses
+    except Exception as e:
+        print(e)
+
+
+ses = connect()
+
+
 def insert_to_table():
     now = datetime.datetime.utcnow()
     entry = Ticks(createad_at=now.strftime('%Y-%m-%d %H:%M:%S'))
-    session = connect()
-    session.add(entry)
-    session.commit()
-    session.close()
+    ses.add(entry)
+    socketio.emit('insert', {'database': f'{os.environ.get("DATABASE")}', 'date': str(datetime.datetime.now())})
+    ses.commit()
+    ses.close()
 
 
-@socketio.on('Ping')
-def handle_ping():
-    while True:
-        print('Ping !!!')
+@socketio.on('connect')
+def connect():
+    print("Client connected")
+
+
+@socketio.on('insert')
+def receive():
+    print("Event has been received")
 
 
 sched = BackgroundScheduler(daemon=True)
-sched.add_job(insert_to_table, trigger='cron', second='*')
+sched.add_job(insert_to_table, trigger='cron', minute="*", second="*/5")
 sched.start()
 
 
@@ -69,7 +76,7 @@ sched.start()
 
 
 if __name__ == '__main__':
-    socketio.run(app, port=9000, debug=True)
+    socketio.run(app, port=9000)
 
 
 
