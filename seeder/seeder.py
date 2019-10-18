@@ -5,6 +5,7 @@ from config import Config
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask_socketio import SocketIO, join_room, emit
 from flask import Flask
+import logging
 import time
 import datetime
 import os
@@ -16,6 +17,7 @@ base = declarative_base()
 
 app = Flask(__name__)
 socketio = SocketIO(app)
+logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S', level=logging.INFO)
 
 
 class Ticks(base):
@@ -35,7 +37,7 @@ def connect():
         base.metadata.create_all(db)
         return ses
     except Exception as e:
-        print(e)
+        logging.error("Exception occurred", exc_info=True)
 
 
 ses = connect()
@@ -45,9 +47,11 @@ def insert_to_table():
     now = datetime.datetime.utcnow()
     entry = Ticks(createad_at=now.strftime('%Y-%m-%d %H:%M:%S'))
     ses.add(entry)
+    logging.info("Entry has been inserted")
     socketio.emit('insert', {'database': f'{os.environ.get("DATABASE")}', 'date': str(datetime.datetime.now())})
     ses.commit()
     ses.close()
+    logging.info("Connection to database closed")
 
 
 @socketio.on('connect')
