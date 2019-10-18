@@ -47,7 +47,7 @@ def insert_to_table():
     now = datetime.datetime.utcnow()
     entry = Ticks(createad_at=now.strftime('%Y-%m-%d %H:%M:%S'))
     ses.add(entry)
-    logging.info("Entry has been inserted")
+    logging.info("Entries has been inserted")
     socketio.emit('insert', {'database': f'{os.environ.get("DATABASE")}', 'date': str(datetime.datetime.now())})
     ses.commit()
     ses.close()
